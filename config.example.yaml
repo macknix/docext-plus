@@ -1,0 +1,72 @@
+# ============================================================================
+# docext_batch configuration
+# ============================================================================
+# Drives a batch run: one vLLM-hosted vision-language model is applied to one or
+# more directories of single-page TIFFs. Each "job" is a directory + its own set
+# of fields to extract, so different document sets can have different extraction
+# requirements in a single run. Output is one CSV per job:
+#   row  = file name
+#   cols = extracted fields
+#
+# Copy this to config.yaml and edit. In Docker, mount it to /app/config.yaml.
+
+model:
+  # The name PREFIX selects the backend:
+  #   hosted_vllm/<hf_repo>  -> local vLLM server (GPU / TRE)
+  #   ollama/<model[:tag]>   -> a running Ollama server (Mac / CPU dev)
+  # Switch models without editing this file using:  --model <name>
+  #
+  # vLLM model options (pick by GPU memory; see docext README for the full list):
+  #   hosted_vllm/Qwen/Qwen2.5-VL-7B-Instruct-AWQ    (~16GB)  <- default
+  #   hosted_vllm/Qwen/Qwen2.5-VL-7B-Instruct        (~24GB)
+  #   hosted_vllm/Qwen/Qwen2.5-VL-32B-Instruct-AWQ   (~48GB)
+  #   hosted_vllm/nanonets/Nanonets-OCR-s            (OCR-tuned)
+  # Ollama model options (for local dev): ollama/qwen2.5vl, ollama/llama3.2-vision
+  name: "hosted_vllm/Qwen/Qwen2.5-VL-7B-Instruct-AWQ"
+  start_server: true        # vLLM only: start it in-container (false => connect to existing)
+  server_host: "127.0.0.1"
+  server_port: 8000         # omit to use the backend default (vLLM 8000, Ollama 11434)
+  max_model_len: 15000      # vLLM only; lower this if you hit GPU memory limits
+  gpu_memory_utilization: 0.9   # vLLM only
+  max_num_imgs: 5           # vLLM only
+  server_start_timeout: 600 # vLLM only; seconds to wait for the model to load
+  dtype: "bfloat16"         # vLLM only; or "float16" (AWQ models are forced to float16)
+
+extraction:
+  max_tokens: 4000
+  max_img_size: 2048        # longest side of each image; lower for less GPU memory
+  concurrency: 4            # documents extracted in parallel (vLLM batches them)
+  confidence: none          # none | binary (High/Low) | numeric (0-100 score); adds a 'confidence' column (~doubles VLM calls)
+  input_extensions: [".tif", ".tiff"]
+  max_pixels: 300000000     # Pillow decompression-bomb guard; raise for huge scans, null to disable
+  rotate: 0                 # DEFAULT page rotation CLOCKWISE (degrees); each job can override (see jobs below)
+
+jobs:
+  # ---- Job 1: invoices --------------------------------------------------
+  - name: invoices
+    input_dir: /data/input/invoices
+    output_csv: /data/output/invoices.csv
+    fields:
+      - name: invoice_number
+        description: "The unique invoice number/identifier"
+      - name: invoice_date
+        description: "Invoice date, normalised to YYYY-MM-DD"
+      - name: total_amount
+        description: "Total amount payable, digits only"
+      - name: supplier_name
+        description: "Name of the company that issued the invoice"
+
+  # ---- Job 2: patient records (different entities, rotated scans) -------
+  - name: patient_records
+    input_dir: /data/input/patient_records
+    output_csv: /data/output/patient_records.csv
+    rotate: 90               # this directory's scans are sideways; overrides extraction.rotate
+    fields:
+      - name: patient_name
+        description: "Full name of the patient"
+      - name: nhs_number
+        description: "NHS number if present, digits only"
+      - name: date_of_birth
+        description: "Date of birth, normalised to YYYY-MM-DD"
+      # A bare string also works when no description is needed:
+      - hospital_name

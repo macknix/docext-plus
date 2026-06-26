@@ -1,0 +1,40 @@
+# =============================================================================
+# All-in-Docker local stack: Ollama + the batch app (Mac / CPU friendly).
+# =============================================================================
+# This is the zero-host-setup option. Note: Ollama inside Docker on a Mac runs
+# CPU-only (no Metal), so it is slower than running Ollama natively. For speed,
+# prefer running Ollama on the host and using Dockerfile.dev directly (see README).
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d ollama
+#   docker compose -f docker-compose.dev.yml exec ollama ollama pull qwen2.5vl
+#   docker compose -f docker-compose.dev.yml run --rm app
+#
+# Put your TIFFs under ./data/input/<job>/ and your config in ./config.dev.yaml.
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama   # persists pulled models across runs
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    depends_on:
+      - ollama
+    volumes:
+      - ./config.dev.yaml:/app/config.yaml:ro
+      - ./data:/data
+    command:
+      - --config
+      - /app/config.yaml
+      - --model
+      - ollama/qwen2.5vl
+      - --server-host
+      - ollama          # the compose service name resolves on the shared network
+
+volumes:
+  ollama_models:

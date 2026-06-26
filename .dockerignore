@@ -1,0 +1,13 @@
+data/
+*.csv
+config.yaml
+.venv/
+__pycache__/
+*.pyc
+.git/
+.DS_Store
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+tests/
+models/

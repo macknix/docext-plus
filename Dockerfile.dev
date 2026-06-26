@@ -1,0 +1,50 @@
+# =============================================================================
+# docext_batch - local development image (Mac / CPU, multi-arch)
+# =============================================================================
+# vLLM is CUDA-only and has no macOS/ARM wheels, so this image does NOT install
+# it. Instead it installs docext WITHOUT its heavy deps (--no-deps) plus only the
+# lightweight libraries our extraction path needs, and talks to an OLLAMA server
+# for inference. This lets you exercise the full pipeline on a Mac.
+#
+# Prereqs (on the Mac host, for best performance with Metal acceleration):
+#   1. Install Ollama:  https://ollama.com/download   (or: brew install ollama)
+#   2. Start it:        ollama serve         (the desktop app also does this)
+#   3. Pull a vision model:   ollama pull qwen2.5vl     (or llama3.2-vision)
+#
+# Build:
+#   docker build -f Dockerfile.dev -t ner-ocr-docext:dev .
+#
+# Run (connects to Ollama running natively on the Mac host):
+#   docker run --rm \
+#     -v "$PWD/config.dev.yaml":/app/config.yaml \
+#     -v "$PWD/data":/data \
+#     ner-ocr-docext:dev \
+#     --config /app/config.yaml \
+#     --model ollama/qwen2.5vl \
+#     --server-host host.docker.internal
+# -----------------------------------------------------------------------------
+FROM python:3.11-slim
+
+# poppler-utils backs pdf2image (a docext import); libgl for Pillow/altered TIFFs.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        poppler-utils libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Pinned to match the GPU image's docext version (see Dockerfile).
+ENV DOCEXT_VERSION=0.1.11
+
+COPY requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements-dev.txt \
+    && pip install --no-cache-dir --no-deps "docext==${DOCEXT_VERSION}"
+
+COPY docext_batch/ ./docext_batch/
+COPY config.example.yaml ./config.example.yaml
+
+ENV PYTHONPATH=/app \
+    GRADIO_ANALYTICS_ENABLED=False \
+    HF_HUB_DISABLE_TELEMETRY=1
+
+ENTRYPOINT ["python", "-m", "docext_batch.run"]
+CMD ["--config", "/app/config.yaml"]

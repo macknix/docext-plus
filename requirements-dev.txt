@@ -1,0 +1,18 @@
+# Lightweight dependencies for local Mac/CPU testing via the Ollama backend.
+#
+# We install docext with --no-deps (see Dockerfile.dev) to avoid its heavy,
+# GPU-only requirements (vllm, torch, transformers, gradio, xgrammar). These are
+# the only docext runtime deps our extraction code path actually imports.
+PyYAML>=6.0
+litellm
+json-repair
+loguru
+mdpd
+pandas
+numpy
+pdf2image
+python-dotenv
+requests
+tabulate
+tenacity
+Pillow

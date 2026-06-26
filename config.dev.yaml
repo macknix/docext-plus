@@ -1,0 +1,28 @@
+# Local development config (Ollama backend, runs on Mac/CPU).
+# Use a small vision model you've pulled with `ollama pull`.
+model:
+  name: "ollama/qwen2.5vl"        # e.g. qwen2.5vl, llama3.2-vision
+  server_host: "host.docker.internal"  # Ollama on the Mac host; "ollama" with compose
+  server_port: 11434
+  ollama_keep_alive: "-1"         # pin the model in memory for the whole run (loaded once)
+
+extraction:
+  max_tokens: 2000
+  max_img_size: 1280              # smaller keeps CPU inference tolerable
+  concurrency: 1                  # Ollama serves one request at a time on CPU
+  confidence: numeric             # none | binary (High/Low) | numeric (0-100 score)
+  input_extensions: [".tif", ".tiff"]
+  rotate: 0                       # DEFAULT rotation CLOCKWISE (degrees); a job can override with its own `rotate`
+
+jobs:
+  - name: sample
+    input_dir: /data/input/sample
+    output_csv: /data/output/sample.csv
+    # rotate: 90            # uncomment to rotate just this directory's scans
+    fields:
+      - name: Place of residence
+        description: "Patient's usual place of residence"
+      - name: Baby delivered address
+        description: "Address at which baby was delivered"
+      - name: Serial Number
+        description: "Serial number or NCDSID"
