@@ -1,15 +1,6 @@
-# Runtime deps for the batch wrapper.
-#
-# docext (and its heavy deps: vllm, torch, litellm, json_repair, loguru, pandas,
-# Pillow) is supplied by the base Docker image (nanonetsopensource/docext).
-# These are the only extras the wrapper itself needs on top of that image.
-#
-# If you instead install into a bare environment, also: pip install docext
+# Runtime deps for the batch wrapper when installing outside Docker.
+# The GPU image (Dockerfile) installs these itself; the dev image uses
+# requirements-dev.txt.
+docext==0.1.11
+transformers>=4.51.1,<4.53.0
 PyYAML>=6.0
-
-# --- Already provided by the docext base image (listed for non-Docker installs) ---
-# docext>=0.1.11
-# Pillow
-# pandas
-# loguru
-# json_repair

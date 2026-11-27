@@ -1,12 +1,10 @@
 # ============================================================================
 # docext_batch configuration
 # ============================================================================
-# Drives a batch run: one vLLM-hosted vision-language model is applied to one or
-# more directories of single-page TIFFs. Each "job" is a directory + its own set
-# of fields to extract, so different document sets can have different extraction
-# requirements in a single run. Output is one CSV per job:
-#   row  = file name
-#   cols = extracted fields
+# One vision-language model is applied to one or more directories of
+# single-page TIFFs. Each "job" is a directory plus its own fields to extract.
+# Output is one long-format CSV per job, one row per (file, entity):
+#   filename, entity_type, value, [confidence], error
 #
 # Copy this to config.yaml and edit. In Docker, mount it to /app/config.yaml.
 

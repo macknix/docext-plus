@@ -1,3 +1,21 @@
-data/*
+# Data and model weights: never commit
+data/
+notebooks/data/
+models/
 *.tar.gz
+*.csv
+*.tif
+*.tiff
+config.yaml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# OS / tooling
 .DS_Store
+.claude/
