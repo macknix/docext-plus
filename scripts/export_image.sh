@@ -48,4 +48,4 @@ else
 fi
 
 echo ">> Done: $OUT ($(du -h "$OUT" | cut -f1))"
-echo "   In the TRE:  gzip -dc $OUT | docker load"
+echo "   In the TRE:  docker load -i $OUT   (or podman load -i $OUT)"

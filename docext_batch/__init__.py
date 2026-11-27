@@ -1,8 +1,8 @@
 """Batch document field extraction built on NanoNets/docext.
 
-Runs a vision-language model (served locally with vLLM) over directories of
-single-page TIFF documents and writes one CSV per directory: rows are file
-names, columns are the extracted entities/fields.
+Runs a vision-language model (vLLM or Ollama) over directories of single-page
+TIFF documents and writes one long-format CSV per directory, with one row per
+(file, entity).
 """
 from __future__ import annotations
 
